@@ -1,4 +1,3 @@
-use gl_generator::{Profile};
 use gl;
 
 use std::ffi::CString;
@@ -33,15 +32,33 @@ pub fn link_shader_program(vs: VertexShader, fs: FragmentShader) -> Result<Shade
             gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
             let mut buf = Vec::with_capacity(len as usize);
             buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetProgramInfoLog(program,
-                                  len,
-                                  ptr::null_mut(),
-                                  buf.as_mut_ptr() as *mut gl::types::GLchar);
-            let si = try!(str::from_utf8(&buf).map_err(|_| "ProgramInfoLog not valid utf8"));
+            gl::GetProgramInfoLog(
+                program,
+                len,
+                ptr::null_mut(),
+                buf.as_mut_ptr() as *mut gl::types::GLchar,
+            );
+            let si = try!(str::from_utf8(&buf).map_err(
+                |_| "ProgramInfoLog not valid utf8",
+            ));
             return Err(format!("{}", si));
         }
 
         Ok(program)
+    }
+}
+
+pub fn use_shader_program(sp: ShaderProgram, output_attribute_name: String) {
+    unsafe {
+        // Use shader program
+        gl::UseProgram(sp);
+        gl::BindFragDataLocation(
+            sp,
+            0,
+            CString::new(output_attribute_name.bytes().collect::<Vec<u8>>())
+                .unwrap()
+                .as_ptr(),
+        );
     }
 }
 
@@ -64,12 +81,16 @@ fn compile_shader(src: &str, ty: gl::types::GLenum) -> Result<gl::types::GLuint,
             gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
             let mut buf = Vec::with_capacity(len as usize);
             buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
-            gl::GetShaderInfoLog(shader,
-                                 len,
-                                 ptr::null_mut(),
-                                 buf.as_mut_ptr() as *mut gl::types::GLchar);
+            gl::GetShaderInfoLog(
+                shader,
+                len,
+                ptr::null_mut(),
+                buf.as_mut_ptr() as *mut gl::types::GLchar,
+            );
 
-            let si = try!(str::from_utf8(&buf).map_err(|_| "ShaderInfoLog not valid utf8"));
+            let si = try!(str::from_utf8(&buf).map_err(
+                |_| "ShaderInfoLog not valid utf8",
+            ));
             return Err(format!("{}", si));
         }
 
