@@ -14,6 +14,9 @@ mod program;
 mod clear;
 mod vertex_collections;
 mod vertex;
+mod state;
+
+use state::State;
 use vertex::Vertex;
 
 // Shader sources
@@ -25,8 +28,9 @@ const FLOATS_FOR_COLOR: usize = 4;
 const ENTIRE_VERTEX_STRIDE: usize = FLOATS_FOR_POSITION + FLOATS_FOR_COLOR;
 
 fn main() {
+    let state = State::new();
     // Vertex data
-    let mut vertex_data: [Vertex; 3] = [
+    let mut vertex_data = [
         Vertex::new(0.0, 0.5, 1.0, 1.0, 1.0, 1.0),
         Vertex::new(0.5, -0.5, 1.0, 1.0, 1.0, 0.0),
         Vertex::new(-0.5, -0.5, 1.0, 1.0, 1.0, 1.0),
@@ -54,17 +58,11 @@ fn main() {
     while p.is_alive() {
         p.check_exit_events();
 
-        let (new_i, new_going_up) = update(i, going_up);
-        i = new_i;
-        going_up = new_going_up;
-
-        vertex_data[0].x = i;
+        state.update();
 
         clear::clear_screen(0.0, 0.0, 1.0, 1.0);
 
-        let fp = vertex_data.as_ptr() as *const gl::types::GLfloat;
-        let buffer = unsafe { slice::from_raw_parts(fp, vertex_data.len() * ENTIRE_VERTEX_STRIDE) };
-        send_and_draw_buffer(buffer, gl::TRIANGLES, ENTIRE_VERTEX_STRIDE);
+        send_and_draw_buffer(state.to_ogl_buffer(), gl::TRIANGLES, ENTIRE_VERTEX_STRIDE);
         p.window.gl_swap_window();
     }
 
