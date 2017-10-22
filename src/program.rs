@@ -1,11 +1,15 @@
 use gl;
 use sdl2;
 
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+
 pub struct Program {
     pub sdl: sdl2::Sdl,
     pub window: sdl2::video::Window,
     pub context: sdl2::video::GLContext,
     pub event_pump: sdl2::EventPump,
+    alive: bool,
 }
 
 impl Program {
@@ -44,6 +48,23 @@ impl Program {
             window: window,
             context: context,
             event_pump: event_pump,
+            alive: true,
         })
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.alive
+    }
+
+    pub fn check_exit_events(&mut self) {
+        for event in self.event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    self.alive = false;
+                }
+                _ => {}
+            }
+        }
     }
 }

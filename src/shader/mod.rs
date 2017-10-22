@@ -3,6 +3,7 @@ use gl;
 use std::ffi::CString;
 use std::str;
 use std::ptr;
+use std::mem;
 
 pub type VertexShader = gl::types::GLuint;
 pub type FragmentShader = gl::types::GLuint;
@@ -95,5 +96,27 @@ fn compile_shader(src: &str, ty: gl::types::GLenum) -> Result<gl::types::GLuint,
         }
 
         Ok(shader)
+    }
+}
+
+pub fn program_bind_attribute(program: ShaderProgram, name: String, count: usize, vector_width: usize, offset: usize) {
+    unsafe {
+        let attr = gl::GetAttribLocation(program, CString::new(name.into_bytes()).unwrap().as_ptr());
+        let err = gl::GetError();
+        println!("err: {}", err);
+
+        gl::EnableVertexAttribArray(attr as gl::types::GLuint);
+        let err = gl::GetError();
+        println!("err: {}", err);
+        gl::VertexAttribPointer(
+            attr as gl::types::GLuint,
+            count as i32,
+            gl::FLOAT,
+            gl::FALSE as gl::types::GLboolean,
+            ((vector_width)*mem::size_of::<gl::types::GLfloat>()) as i32,
+            (offset*(mem::size_of::<gl::types::GLfloat>())) as *const gl::types::GLvoid
+        );
+        let err = gl::GetError();
+        println!("err: {}", err);
     }
 }
