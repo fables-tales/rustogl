@@ -1,7 +1,6 @@
 use gl;
 use vertex::Vertex;
 use std::slice;
-use std::mem;
 
 pub struct State {
     vertices: Vec<Vertex>,
@@ -35,12 +34,12 @@ impl State {
         if self.i < 0.0 {
             self.direction = true;
         }
-        self.vertices[0].x = self.i
+        self.vertices[0].position.x = self.i
     }
 
     pub fn to_ogl_buffer<'a>(&self) -> &'a[gl::types::GLfloat] {
         let fp = self.vertices.as_ptr() as *const gl::types::GLfloat;
-        let buffer = unsafe { slice::from_raw_parts(fp, self.vertices.len() * mem::size_of::<Vertex>()) };
+        let buffer = unsafe { slice::from_raw_parts(fp, self.vertices.len() * Vertex::byte_size_of_vertex()) };
         buffer
     }
 }
