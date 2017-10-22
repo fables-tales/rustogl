@@ -62,10 +62,10 @@ impl ShaderProgram {
             println!("err: {}", err);
             gl::VertexAttribPointer(
                 attr as gl::types::GLuint,
-                count as i32,
+                count as gl::types::GLint,
                 gl::FLOAT,
                 gl::FALSE as gl::types::GLboolean,
-                ((stride)*mem::size_of::<gl::types::GLfloat>()) as i32,
+                ((stride)*mem::size_of::<gl::types::GLfloat>()) as gl::types::GLsizei,
                 (offset*(mem::size_of::<gl::types::GLfloat>())) as *const gl::types::GLvoid
                 );
             let err = gl::GetError();

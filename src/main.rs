@@ -89,7 +89,7 @@ fn send_and_draw_buffer(buffer: &[GLfloat], shape_type: gl::types::GLenum, verte
         gl::BufferData(
             gl::ARRAY_BUFFER,
             (buffer.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            mem::transmute(&buffer[0]),
+            buffer.as_ptr() as *const GLvoid,
             gl::DYNAMIC_DRAW,
         );
 

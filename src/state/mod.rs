@@ -1,14 +1,16 @@
 use gl;
 use vertex::Vertex;
 use std::slice;
+use std::marker::PhantomData;
 
-pub struct State {
+pub struct State<'a> {
     vertices: Vec<Vertex>,
     i: f32,
     direction: bool,
+    _mark: PhantomData<&'a ()>,
 }
 
-impl State {
+impl <'a> State<'a> {
     pub fn new() -> Self {
         State {
             vertices: vec!(
@@ -21,6 +23,7 @@ impl State {
             ),
             i: 0.0,
             direction: true,
+            _mark: PhantomData,
         }
     }
     pub fn update(&mut self) {
@@ -40,7 +43,7 @@ impl State {
         self.vertices[0].position.x = self.i
     }
 
-    pub fn to_ogl_buffer<'a>(&self) -> &'a[gl::types::GLfloat] {
+    pub fn to_ogl_buffer(&self) -> &'a[gl::types::GLfloat] {
         let fp = self.vertices.as_ptr() as *const gl::types::GLfloat;
         let buffer = unsafe { slice::from_raw_parts(fp, self.vertices.len() * Vertex::float_size_of_vertex()) };
         buffer
