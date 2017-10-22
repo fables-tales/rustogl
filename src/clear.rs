@@ -1,8 +1,10 @@
 use gl;
 
-pub fn clear_screen(r: gl::types::GLfloat, g: gl::types::GLfloat, b: gl::types::GLfloat, a: gl::types::GLfloat) {
+use vertex::Color;
+
+pub fn clear_screen(color: Color) {
     unsafe {
-        gl::ClearColor(r, g, b, a);
+        gl::ClearColor(color.r, color.g, color.b, color.a);
         gl::Clear(gl::COLOR_BUFFER_BIT);
     }
 }
