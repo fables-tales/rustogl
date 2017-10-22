@@ -28,69 +28,69 @@ fn main() {
     let mut state = State::new();
     let mut p = program::Program::new("hello triangle".into(), 800, 600).unwrap();
 
-    let (program, vs, fs, vao, vbo) = setup();
-    while p.is_alive() {
-        p.check_exit_events();
+    let (program, vao, vbo) = setup();
+    let res = program.with("out_color".into(), || {
+        while p.is_alive() {
+            p.check_exit_events();
 
-        state.update();
+            state.update();
 
-        clear::clear_screen(
-            Color {
-                r: 0.0,
-                g: 0.0,
-                b: 1.0,
-                a: 1.0,
-            }
-        );
+            clear::clear_screen(
+                Color {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 1.0,
+                    a: 1.0,
+                }
+                );
 
-        send_and_draw_buffer(
-            state.to_ogl_buffer(),
-            gl::TRIANGLES,
-            Vertex::float_size_of_vertex()
-        );
-        p.window.gl_swap_window();
-    }
+            send_and_draw_buffer(
+                state.to_ogl_buffer(),
+                gl::TRIANGLES,
+                Vertex::float_size_of_vertex()
+                );
+            p.window.gl_swap_window();
+        }
+
+        Ok(())
+    });
+
+    res.unwrap();
 
     // Cleanup
     unsafe {
-        gl::DeleteProgram(program);
-        gl::DeleteShader(fs);
-        gl::DeleteShader(vs);
         gl::DeleteBuffers(1, &vbo);
         gl::DeleteVertexArrays(1, &vao);
     }
 }
 
-fn setup() -> (shader::ShaderProgram, shader::VertexShader, shader::FragmentShader, vertex_collections::VertexArray, vertex_collections::VertexBuffer) {
+fn setup() -> (shader::ShaderProgram, vertex_collections::VertexArray, vertex_collections::VertexBuffer) {
     blend::setup_blending();
 
     let vs = shader::compile_vertex_shader(VS_SRC).unwrap();
     let fs = shader::compile_fragment_shader(FS_SRC).unwrap();
     let program = shader::link_shader_program(vs, fs).unwrap();
-    shader::use_shader_program(program, "out_color".into());
 
     let vao = vertex_collections::make_vertex_array();
     let vbo = vertex_collections::make_vertex_buffer();
 
     vertex_collections::bind_array_and_vertex_buffer(vao, vbo);
 
-    shader::program_bind_attribute(
-        program,
+    program.bind_attribute(
         "position".into(),
         Vertex::float_size_of_position(),
         Vertex::float_size_of_vertex(),
         Vertex::float_offset_of_position() as usize,
     );
 
-    shader::program_bind_attribute(
-        program,
+    program.bind_attribute(
         "color".into(),
         Vertex::float_size_of_color(),
         Vertex::float_size_of_vertex(),
         Vertex::float_offset_of_color() as usize,
     );
 
-    (program, vs, fs, vao, vbo)
+    (program, vao, vbo)
 }
 
 fn send_and_draw_buffer(buffer: &[GLfloat], shape_type: gl::types::GLenum, vertex_stride: usize) {

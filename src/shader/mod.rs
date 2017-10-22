@@ -7,7 +7,66 @@ use std::mem;
 
 pub type VertexShader = gl::types::GLuint;
 pub type FragmentShader = gl::types::GLuint;
-pub type ShaderProgram = gl::types::GLuint;
+
+pub struct ShaderProgram {
+    vs: VertexShader,
+    fs: FragmentShader,
+    gl_pointer: gl::types::GLuint,
+}
+
+impl Drop for ShaderProgram {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteProgram(self.gl_pointer);
+            gl::DeleteShader(self.fs);
+            gl::DeleteShader(self.vs);
+        }
+    }
+}
+
+impl ShaderProgram {
+    pub fn with<F>(&self, output_attribute_name: String, callable: F) -> Result<(), String>
+    where F: FnOnce() -> Result<(), String> {
+        unsafe {
+            // Use shader program
+            gl::UseProgram(self.gl_pointer);
+            gl::BindFragDataLocation(
+                self.gl_pointer,
+                0,
+                CString::new(output_attribute_name.bytes().collect::<Vec<u8>>())
+                .unwrap()
+                .as_ptr(),
+            );
+
+            let res = callable();
+            gl::UseProgram(0);
+            res
+        }
+    }
+
+
+    pub fn bind_attribute(&self, name: String, count: usize, stride: usize, offset: usize) {
+        unsafe {
+            let attr = gl::GetAttribLocation(self.gl_pointer, CString::new(name.into_bytes()).unwrap().as_ptr());
+            let err = gl::GetError();
+            println!("err: {}", err);
+
+            gl::EnableVertexAttribArray(attr as gl::types::GLuint);
+            let err = gl::GetError();
+            println!("err: {}", err);
+            gl::VertexAttribPointer(
+                attr as gl::types::GLuint,
+                count as i32,
+                gl::FLOAT,
+                gl::FALSE as gl::types::GLboolean,
+                ((stride)*mem::size_of::<gl::types::GLfloat>()) as i32,
+                (offset*(mem::size_of::<gl::types::GLfloat>())) as *const gl::types::GLvoid
+                );
+            let err = gl::GetError();
+            println!("err: {}", err);
+        }
+    }
+}
 
 pub fn compile_vertex_shader(src: &str) -> Result<VertexShader, String> {
     compile_shader(src, gl::VERTEX_SHADER).map(|r| r as VertexShader)
@@ -45,23 +104,16 @@ pub fn link_shader_program(vs: VertexShader, fs: FragmentShader) -> Result<Shade
             return Err(format!("{}", si));
         }
 
-        Ok(program)
+        let complete = ShaderProgram {
+            vs: vs,
+            fs: fs,
+            gl_pointer: program,
+        };
+
+        Ok(complete)
     }
 }
 
-pub fn use_shader_program(sp: ShaderProgram, output_attribute_name: String) {
-    unsafe {
-        // Use shader program
-        gl::UseProgram(sp);
-        gl::BindFragDataLocation(
-            sp,
-            0,
-            CString::new(output_attribute_name.bytes().collect::<Vec<u8>>())
-                .unwrap()
-                .as_ptr(),
-        );
-    }
-}
 
 fn compile_shader(src: &str, ty: gl::types::GLenum) -> Result<gl::types::GLuint, String> {
     let shader;
@@ -96,27 +148,5 @@ fn compile_shader(src: &str, ty: gl::types::GLenum) -> Result<gl::types::GLuint,
         }
 
         Ok(shader)
-    }
-}
-
-pub fn program_bind_attribute(program: ShaderProgram, name: String, count: usize, vector_width: usize, offset: usize) {
-    unsafe {
-        let attr = gl::GetAttribLocation(program, CString::new(name.into_bytes()).unwrap().as_ptr());
-        let err = gl::GetError();
-        println!("err: {}", err);
-
-        gl::EnableVertexAttribArray(attr as gl::types::GLuint);
-        let err = gl::GetError();
-        println!("err: {}", err);
-        gl::VertexAttribPointer(
-            attr as gl::types::GLuint,
-            count as i32,
-            gl::FLOAT,
-            gl::FALSE as gl::types::GLboolean,
-            ((vector_width)*mem::size_of::<gl::types::GLfloat>()) as i32,
-            (offset*(mem::size_of::<gl::types::GLfloat>())) as *const gl::types::GLvoid
-        );
-        let err = gl::GetError();
-        println!("err: {}", err);
     }
 }
