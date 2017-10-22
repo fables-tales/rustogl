@@ -25,6 +25,12 @@ impl Drop for ShaderProgram {
 }
 
 impl ShaderProgram {
+    pub fn new(vertex_shader_source: &str, fragment_shader_source: &str) -> Result<Self, String> {
+        let vs = try!(compile_vertex_shader(vertex_shader_source));
+        let fs = try!(compile_fragment_shader(fragment_shader_source));
+        link_shader_program(vs, fs)
+    }
+
     pub fn with<F>(&self, output_attribute_name: String, callable: F) -> Result<(), String>
     where F: FnOnce() -> Result<(), String> {
         unsafe {
@@ -68,15 +74,15 @@ impl ShaderProgram {
     }
 }
 
-pub fn compile_vertex_shader(src: &str) -> Result<VertexShader, String> {
+fn compile_vertex_shader(src: &str) -> Result<VertexShader, String> {
     compile_shader(src, gl::VERTEX_SHADER).map(|r| r as VertexShader)
 }
 
-pub fn compile_fragment_shader(src: &str) -> Result<FragmentShader, String> {
+fn compile_fragment_shader(src: &str) -> Result<FragmentShader, String> {
     compile_shader(src, gl::FRAGMENT_SHADER).map(|r| r as FragmentShader)
 }
 
-pub fn link_shader_program(vs: VertexShader, fs: FragmentShader) -> Result<ShaderProgram, String> {
+fn link_shader_program(vs: VertexShader, fs: FragmentShader) -> Result<ShaderProgram, String> {
     unsafe {
         let program = gl::CreateProgram();
         gl::AttachShader(program, vs);

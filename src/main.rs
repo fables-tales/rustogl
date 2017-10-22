@@ -28,69 +28,57 @@ fn main() {
     let mut state = State::new();
     let mut p = program::Program::new("hello triangle".into(), 800, 600).unwrap();
 
-    let (program, vao, vbo) = setup();
+    let (program, vb) = setup();
     let res = program.with("out_color".into(), || {
-        while p.is_alive() {
-            p.check_exit_events();
+        vb.with(|| {
+            program.bind_attribute(
+                "position".into(),
+                Vertex::float_size_of_position(),
+                Vertex::float_size_of_vertex(),
+                Vertex::float_offset_of_position() as usize,
+            );
 
-            state.update();
+            program.bind_attribute(
+                "color".into(),
+                Vertex::float_size_of_color(),
+                Vertex::float_size_of_vertex(),
+                Vertex::float_offset_of_color() as usize,
+            );
 
-            clear::clear_screen(
-                Color {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 1.0,
-                    a: 1.0,
-                }
+            while p.is_alive() {
+                p.check_exit_events();
+
+                state.update();
+
+                clear::clear_screen(
+                    Color {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 1.0,
+                        a: 1.0,
+                    }
+                    );
+
+                send_and_draw_buffer(
+                    state.to_ogl_buffer(),
+                    gl::TRIANGLES,
+                    Vertex::float_size_of_vertex()
                 );
+                p.window.gl_swap_window();
+            }
 
-            send_and_draw_buffer(
-                state.to_ogl_buffer(),
-                gl::TRIANGLES,
-                Vertex::float_size_of_vertex()
-                );
-            p.window.gl_swap_window();
-        }
-
-        Ok(())
+            Ok(())
+        })
     });
 
     res.unwrap();
-
-    // Cleanup
-    unsafe {
-        gl::DeleteBuffers(1, &vbo);
-        gl::DeleteVertexArrays(1, &vao);
-    }
 }
 
-fn setup() -> (shader::ShaderProgram, vertex_collections::VertexArray, vertex_collections::VertexBuffer) {
+fn setup() -> (shader::ShaderProgram, vertex_collections::VertexArrayBufferPair) {
     blend::setup_blending();
-
-    let vs = shader::compile_vertex_shader(VS_SRC).unwrap();
-    let fs = shader::compile_fragment_shader(FS_SRC).unwrap();
-    let program = shader::link_shader_program(vs, fs).unwrap();
-
-    let vao = vertex_collections::make_vertex_array();
-    let vbo = vertex_collections::make_vertex_buffer();
-
-    vertex_collections::bind_array_and_vertex_buffer(vao, vbo);
-
-    program.bind_attribute(
-        "position".into(),
-        Vertex::float_size_of_position(),
-        Vertex::float_size_of_vertex(),
-        Vertex::float_offset_of_position() as usize,
-    );
-
-    program.bind_attribute(
-        "color".into(),
-        Vertex::float_size_of_color(),
-        Vertex::float_size_of_vertex(),
-        Vertex::float_offset_of_color() as usize,
-    );
-
-    (program, vao, vbo)
+    let program = shader::ShaderProgram::new(VS_SRC, FS_SRC).unwrap();
+    let vb = vertex_collections::VertexArrayBufferPair::new();
+    (program, vb)
 }
 
 fn send_and_draw_buffer(buffer: &[GLfloat], shape_type: gl::types::GLenum, vertex_stride: usize) {
