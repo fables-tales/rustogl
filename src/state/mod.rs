@@ -5,6 +5,8 @@ use std::mem;
 
 pub struct State {
     vertices: Vec<Vertex>,
+    i: f32,
+    direction: bool,
 }
 
 impl State {
@@ -14,10 +16,26 @@ impl State {
                 Vertex::new(0.0, 0.5, 1.0, 1.0, 1.0, 1.0),
                 Vertex::new(0.5, -0.5, 1.0, 1.0, 1.0, 0.0),
                 Vertex::new(-0.5, -0.5, 1.0, 1.0, 1.0, 1.0),
-            )
+            ),
+            i: 0.0,
+            direction: true,
         }
     }
-    pub fn update(&self) {
+    pub fn update(&mut self) {
+        if self.direction {
+            self.i += 0.1
+        } else {
+            self.i -= 0.1
+        }
+
+        if self.i > 1.0 {
+            self.direction = false
+        }
+
+        if self.i < 0.0 {
+            self.direction = true;
+        }
+        self.vertices[0].x = self.i
     }
 
     pub fn to_ogl_buffer<'a>(&self) -> &'a[gl::types::GLfloat] {

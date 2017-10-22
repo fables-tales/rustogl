@@ -28,7 +28,7 @@ const FLOATS_FOR_COLOR: usize = 4;
 const ENTIRE_VERTEX_STRIDE: usize = FLOATS_FOR_POSITION + FLOATS_FOR_COLOR;
 
 fn main() {
-    let state = State::new();
+    let mut state = State::new();
     // Vertex data
     let mut vertex_data = [
         Vertex::new(0.0, 0.5, 1.0, 1.0, 1.0, 1.0),
