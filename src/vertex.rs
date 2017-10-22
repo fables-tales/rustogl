@@ -22,9 +22,9 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn byte_size_of_vertex() -> usize {
-        mem::size_of::<Self>()
-    }
+//    pub fn byte_size_of_vertex() -> usize {
+//        mem::size_of::<Self>()
+//    }
 
     pub fn float_size_of_vertex() -> usize {
         mem::size_of::<Self>() / mem::size_of::<GLfloat>()

@@ -15,6 +15,9 @@ impl State {
                 Vertex::new(0.0, 0.5, 1.0, 1.0, 1.0, 1.0),
                 Vertex::new(0.5, -0.5, 1.0, 1.0, 1.0, 0.0),
                 Vertex::new(-0.5, -0.5, 1.0, 1.0, 1.0, 1.0),
+                Vertex::new(0.0, -0.5, 1.0, 1.0, 1.0, 1.0),
+                Vertex::new(0.5, 0.5, 1.0, 1.0, 1.0, 0.0),
+                Vertex::new(-0.5, 0.5, 1.0, 1.0, 1.0, 1.0),
             ),
             i: 0.0,
             direction: true,
@@ -39,7 +42,7 @@ impl State {
 
     pub fn to_ogl_buffer<'a>(&self) -> &'a[gl::types::GLfloat] {
         let fp = self.vertices.as_ptr() as *const gl::types::GLfloat;
-        let buffer = unsafe { slice::from_raw_parts(fp, self.vertices.len() * Vertex::byte_size_of_vertex()) };
+        let buffer = unsafe { slice::from_raw_parts(fp, self.vertices.len() * Vertex::float_size_of_vertex()) };
         buffer
     }
 }

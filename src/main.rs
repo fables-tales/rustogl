@@ -26,44 +26,38 @@ static FS_SRC: &'static str = include_str!("shader/programs/fragment.frag");
 
 fn main() {
     let mut state = State::new();
+    let s2 = State::new();
     let mut p = program::Program::new("hello triangle".into(), 800, 600).unwrap();
 
-    let (program, vb) = setup();
+    let bg_color = Color{r: 0.0, g: 0.0, b: 1.0, a: 1.0};
+
+    blend::setup_blending();
+    let program = shader::ShaderProgram::new(VS_SRC, FS_SRC).unwrap();
+    let vb = vertex_collections::VertexArrayBufferPair::new();
+
     let res = program.with("out_color".into(), || {
         vb.with(|| {
-            program.bind_attribute(
-                "position".into(),
-                Vertex::float_size_of_position(),
-                Vertex::float_size_of_vertex(),
-                Vertex::float_offset_of_position() as usize,
-            );
-
-            program.bind_attribute(
-                "color".into(),
-                Vertex::float_size_of_color(),
-                Vertex::float_size_of_vertex(),
-                Vertex::float_offset_of_color() as usize,
-            );
-
+            bind_attributes(&program);
             while p.is_alive() {
                 p.check_exit_events();
 
                 state.update();
 
-                clear::clear_screen(
-                    Color {
-                        r: 0.0,
-                        g: 0.0,
-                        b: 1.0,
-                        a: 1.0,
-                    }
-                    );
+                clear::clear_screen(&bg_color);
 
                 send_and_draw_buffer(
                     state.to_ogl_buffer(),
                     gl::TRIANGLES,
                     Vertex::float_size_of_vertex()
                 );
+
+                send_and_draw_buffer(
+                    s2.to_ogl_buffer(),
+                    gl::TRIANGLES,
+                    Vertex::float_size_of_vertex()
+                );
+
+
                 p.window.gl_swap_window();
             }
 
@@ -74,11 +68,20 @@ fn main() {
     res.unwrap();
 }
 
-fn setup() -> (shader::ShaderProgram, vertex_collections::VertexArrayBufferPair) {
-    blend::setup_blending();
-    let program = shader::ShaderProgram::new(VS_SRC, FS_SRC).unwrap();
-    let vb = vertex_collections::VertexArrayBufferPair::new();
-    (program, vb)
+fn bind_attributes(program: &shader::ShaderProgram) {
+    program.bind_attribute(
+        "position".into(),
+        Vertex::float_size_of_position(),
+        Vertex::float_size_of_vertex(),
+        Vertex::float_offset_of_position() as usize,
+    );
+
+    program.bind_attribute(
+        "color".into(),
+        Vertex::float_size_of_color(),
+        Vertex::float_size_of_vertex(),
+        Vertex::float_offset_of_color() as usize,
+    );
 }
 
 fn send_and_draw_buffer(buffer: &[GLfloat], shape_type: gl::types::GLenum, vertex_stride: usize) {
